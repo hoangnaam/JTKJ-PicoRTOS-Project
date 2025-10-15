@@ -50,7 +50,7 @@ static void buzzer_task(void *arg) {
 
     while(1){
         buzzer_play_tone (440, 500);
-        vTaskDelay(pdMS_TO_TICKS(6000));
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }
 

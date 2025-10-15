@@ -21,7 +21,7 @@
 
 // Tehtävä 3: Tilakoneen esittely Add missing states.
 // Exercise 3: Definition of the state machine. Add missing states.
-enum state { WAITING=1};
+enum state { WAITING=1, DATA_READY=2};
 enum state programState = WAITING;
 
 // Tehtävä 3: Valoisuuden globaali muuttuja
@@ -33,21 +33,46 @@ static void btn_fxn(uint gpio, uint32_t eventMask) {
     //            Tarkista SDK, ja jos et löydä vastaavaa funktiota, sinun täytyy toteuttaa se itse.
     // Exercise 1: Toggle the LED. 
     //             Check the SDK and if you do not find a function you would need to implement it yourself. 
+    toggle_led();
 }
 
 static void sensor_task(void *arg){
     (void)arg;
     // Tehtävä 2: Alusta valoisuusanturi. Etsi SDK-dokumentaatiosta sopiva funktio.
     // Exercise 2: Init the light sensor. Find in the SDK documentation the adequate function.
-   
+
+    uint8_t txBuffer[1];
+    uint8_t rxBuffer[2];
+    txBuffer [0] = VEML6030_ALS_REG;
+
+    init_veml6030();
+    
     for(;;){
-        
         // Tehtävä 2: Muokkaa tästä eteenpäin sovelluskoodilla. Kommentoi seuraava rivi.
         //             
         // Exercise 2: Modify with application code here. Comment following line.
-        //             Read sensor data and print it out as string; 
-        tight_loop_contents(); 
-
+        //             Read sensor data and print it out as string;
+        if (programState != DATA_READY) {
+            if (i2c_write_blocking(i2c_default, VEML6030_I2C_ADDR, txBuffer, 1, true) != PICO_ERROR_GENERIC) {
+                if(i2c_read_blocking(i2c_default, VEML6030_I2C_ADDR, rxBuffer, 2, false) != PICO_ERROR_GENERIC) {
+                    uint16_t raw = ((uint16_t)rxBuffer[1] << 8) | rxBuffer[0];
+                    float luminance = raw / 0.5f; 
+                    ambientLight = luminance;
+                    programState = DATA_READY;
+            tight_loop_contents();
+            vTaskDelay(pdMS_TO_TICKS(100));
+            continue;
+                }
+                else {
+                    printf("I2C read error\n");
+                }
+            }
+        }
+        //else{
+        //    printf("Luminance: %.2f lux\n", ambientLight);
+        //}   
+        
+    }
 
    
 
@@ -72,7 +97,6 @@ static void sensor_task(void *arg){
 
         // Do not remove this
         vTaskDelay(pdMS_TO_TICKS(1000));
-    }
 }
 
 static void print_task(void *arg){
@@ -157,6 +181,9 @@ int main() {
 
     // Exercise 1: Initialize the button and the led and define an register the corresponding interrupton.
     //             Interruption handler is defined up as btn_fxn
+    init_led();
+    init_button1();
+    gpio_set_irq_enabled_with_callback(BUTTON1, GPIO_IRQ_EDGE_FALL, true, btn_fxn);
     // Tehtävä 1:  Alusta painike ja LEd ja rekisteröi vastaava keskeytys.
     //             Keskeytyskäsittelijä on määritelty yläpuolella nimellä btn_fxn
 
