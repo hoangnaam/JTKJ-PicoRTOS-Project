@@ -1,3 +1,4 @@
+https://github.com/UniOulu-Ubicomp-Programming-Courses/JTKJ-PicoRTOS-Project
 ## Important links
 [TKJHAT library](https://unioulu-ubicomp-programming-courses.github.io/JTKJ-PicoRTOS-Project/)
 
